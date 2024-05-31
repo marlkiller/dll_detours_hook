@@ -9,7 +9,12 @@ set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+
+
+# 为 vs studio 配置设置编译选项, 使用 /Od 关闭优化
+#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Od")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Od")
+
 
 set(COMPILE_OPTION
       
@@ -31,11 +36,17 @@ include_directories(
         ${CMAKE_SOURCE_DIR}/dll_detours_hook
 )
 
-
+## 编译为 dll 库
 add_library(${PROJECT_NAME} SHARED
         ${Main}
         ${MainHeader}
 )
+
+## 编译为 bin 可执行程序
+#add_executable (${PROJECT_NAME} 
+#        ${Main}
+#        ${MainHeader}
+#)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
