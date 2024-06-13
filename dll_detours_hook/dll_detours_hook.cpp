@@ -8,6 +8,12 @@
 //#pragma comment (lib,"libs\detours.lib")
 //#pragma comment (lib,"libs/detours.lib")
 
+
+// 实现导出的函数
+int dll_detours_hook_export() {
+    return 521;
+}
+
 // Original function
 int sum(int a, int b) {
     return a + b;
