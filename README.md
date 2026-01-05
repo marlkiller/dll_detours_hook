@@ -1,5 +1,18 @@
 # dll_detours_hook
 
+
+
+
+## 动态注入
+withdll.exe /d:..\release\dll_detours_hook.dll "D:\tools\Snipaste\Snipaste.exe"
+
+## 静态注入
+### 绝对路径
+setdll.exe /d:..\release\dll_detours_hook.dll "D:\tools\Snipaste\Snipaste.exe"
+### 相对路径
+"D:\workspace\code\c\dll_detours_hook\tools\setdll.exe" /d:dll_detours_hook.dll "Snipaste.exe"
+
 TODO....
-1. ���� github action ���� release
+1. 配置 github action 生成 release
 2. Hack some app
+

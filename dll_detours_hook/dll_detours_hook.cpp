@@ -1,85 +1,106 @@
 #include "dll_detours_hook.h"
-#include "stdlib.h"
-#include <iostream>
 #include <Windows.h>
-#include "detours.h"
-#include "detver.h"
-//#pragma comment(lib,"detours.lib")
-//#pragma comment (lib,"libs\detours.lib")
-//#pragma comment (lib,"libs/detours.lib")
+#include <string>
+#include <vector>
+#include <algorithm> // For std::transform and std::tolower
+#include <filesystem> // For std::filesystem::path
+#include "Logger.h"
+#include "HookAdapter.h"
+#include "HookRegistry.h" // Include the new registry header
 
+// Global vector to hold all active hook adapters
+std::vector<HookAdapter*> g_hooks;
 
-// 实现导出的函数
-int dll_detours_hook_export() {
+// Exported function implementation
+extern "C" DLL_DETOURS_HOOK_API int dll_detours_hook_export() {
     return 521;
 }
 
-// Original function
-int sum(int a, int b) {
-    return a + b;
+std::string GetCurrentProcessExeName() {
+    WCHAR wProcessPath[MAX_PATH];
+    if (GetModuleFileNameW(NULL, wProcessPath, MAX_PATH) == 0) {
+        LOG_DEBUG("Failed to get current process path.");
+        return "";
+    }
+
+    std::filesystem::path fullPath(wProcessPath);
+    std::string processName = fullPath.filename().string();
+    
+    // Convert to lowercase for consistent comparison
+    std::transform(processName.begin(), processName.end(), processName.begin(),
+                   [](unsigned char c){ return std::tolower(c); });
+
+    return processName;
 }
 
-// Function pointer to hold the address of the original function
-// This allows calling the original function even after it has been hooked
-static int (*original_sum)(int a, int b) = sum;
+// New central function to attach all hooks
+extern "C" DLL_DETOURS_HOOK_API void AttachAllHooks() {
+    std::string processName = GetCurrentProcessExeName();
 
-// Replacement function
-int mySum(int a, int b) {
-    // If needed, you can call the original function via original_sum
-    // Uncomment the line below to see the original result
-    // std::cout << "Result before replacement: " << original_sum(a, b) << std::endl;
-    return a * b;
+    if (processName.empty()) {
+        LOG_DEBUG("Could not determine current process executable name.");
+        return;
+    }
+
+    LOG_DEBUG("DLL attached to process: %s", processName.c_str());
+
+    HookAdapter* matchedHook = nullptr;
+
+    for (const auto& entry : g_hookCreators) {
+        HookCreatorFn creator = entry.second;
+        // Instantiate the hook to check its process name.
+        // The HookAdapter::GetProcessName() method is const.
+        // We create a temporary instance just to call GetProcessName().
+        // If it matches, we recreate it to install.
+        std::unique_ptr<HookAdapter> tempHook(creator());
+        if (tempHook && tempHook->ShouldHook(processName)) {
+            // Found a match, now create the actual hook instance for installation
+            matchedHook = creator();
+            if (!matchedHook) {
+                LOG_DEBUG("Failed to create hook instance for process: %s", entry.first.c_str());
+                continue; // Try next hook creator
+            }
+
+            LOG_DEBUG("Found matching hook for process: %s, type: %s", processName.c_str(), matchedHook->GetProcessName());
+            if (!matchedHook->InstallHook()) {
+                LOG_DEBUG("Failed to install hook for process: %s", matchedHook->GetProcessName());
+                delete matchedHook; // Cleanup if install fails
+                matchedHook = nullptr; // Mark as failed
+            } else {
+                g_hooks.push_back(matchedHook); // Only add to global list if successfully installed
+            }
+            break; // Found and handled the matching hook, stop iterating
+        }
+    }
+
+    if (!matchedHook) {
+        LOG_DEBUG("No suitable hook found for process: %s", processName.c_str());
+    }
 }
-//
-//
 
-//
-////解除拦截函数
-//void EndHook() {
-//    //开始事务
-//    DetourTransactionBegin();
-//    //更新线程信息 
-//    DetourUpdateThread(GetCurrentThread());
-//    //将拦截函数从原函数的地址上解除
-//    DetourDetach(&(PVOID&)original_sum, (PVOID)mySum);
-//    //结束事务
-//    DetourTransactionCommit();
-//}
+// New central function to detach all hooks and clean up
+extern "C" DLL_DETOURS_HOOK_API void DetachAllHooks() {
+    LOG_DEBUG("Cleaning up hook objects.");
+    for (HookAdapter* hook : g_hooks) {
+        delete hook;
+    }
+    g_hooks.clear();
+}
+
 
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
-
-    std::cout << "Hello, dll_detours_hook!" << std::endl;
-
-    printf("before %d\n", sum(1,2));
-    // DobbyHook(sum, mySum, (void *)&sum_p);
-
-    //开始事务
-    DetourTransactionBegin();
-    //更新线程信息
-    DetourUpdateThread(GetCurrentThread());
-    //将拦截函数附加到原函数的地址上
-    DetourAttach(&(PVOID&)original_sum, (PVOID)mySum);
-    //结束事务
-    DetourTransactionCommit();
-    
-    
-    printf("after %d\n", sum(1,2));
-    
-    
     switch (ul_reason_for_call)
     {
         case DLL_PROCESS_ATTACH:
-            // 进程被加载后执行
-            break;
-        case DLL_THREAD_ATTACH:
-            // 线程被创建后加载
-            break;
-        case DLL_THREAD_DETACH:
-            // 正常退出执行的代码
+            // Disable DLL_THREAD_ATTACH and DLL_THREAD_DETACH notifications
+            DisableThreadLibraryCalls((HMODULE)hModule);
+            // Install hooks
+            AttachAllHooks(); // Call the new function
             break;
         case DLL_PROCESS_DETACH:
-            // 进程卸载本Dll后执行的代码
+            // Uninstall hooks
+            DetachAllHooks(); // Call the new function
             break;
     }
     return TRUE;
