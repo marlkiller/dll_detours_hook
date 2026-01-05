@@ -16,4 +16,7 @@ public:
 
     // Installs the actual hooks.
     virtual bool InstallHook() = 0;
+
+    // Uninstalls the hooks.
+    virtual void UninstallHook() {}
 };

@@ -82,6 +82,7 @@ extern "C" DLL_DETOURS_HOOK_API void AttachAllHooks() {
 extern "C" DLL_DETOURS_HOOK_API void DetachAllHooks() {
     LOG_DEBUG("Cleaning up hook objects.");
     for (HookAdapter* hook : g_hooks) {
+        hook->UninstallHook(); // Call UninstallHook() before deleting
         delete hook;
     }
     g_hooks.clear();

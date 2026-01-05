@@ -1,8 +1,9 @@
 #include "DemoHook.h"
 #include "Logger.h"
 #include <Windows.h>
-#include "detours.h"
+// #include "detours.h" // No longer directly needed here for transactions
 #include "HookRegistry.h" // For REGISTER_HOOK macro
+#include "utils/DetourUtils.h" // Include our new DetourUtils
 
 // Original function pointer for MessageBoxW
 static int (WINAPI * g_origMessageBoxW)(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType) = MessageBoxW;
@@ -30,20 +31,14 @@ const char* DemoHook::GetProcessName() const
 bool DemoHook::InstallHook()
 {
     LOG_DEBUG("Installing hooks for %s", GetProcessName());
+    return DetourUtils::Hook(&(PVOID&)g_origMessageBoxW, MyMessageBoxW);
+}
 
-    DetourTransactionBegin();
-    DetourUpdateThread(GetCurrentThread());
-    DetourAttach(&(PVOID&)g_origMessageBoxW, MyMessageBoxW);
-    LONG error = DetourTransactionCommit();
-
-    if (error == NO_ERROR) {
-        LOG_DEBUG("MessageBoxW hook attached successfully.");
-    } else {
-        LOG_DEBUG("Error attaching MessageBoxW hook: %d", error);
-        return false;
-    }
-
-    return true;
+void DemoHook::UninstallHook()
+{
+    LOG_DEBUG("Uninstalling hooks for %s", GetProcessName());
+    DetourUtils::UnHook(&(PVOID&)g_origMessageBoxW, MyMessageBoxW);
+    g_origMessageBoxW = MessageBoxW; // Reset to original for safety/clarity
 }
 
 // Register this hook using the macro
