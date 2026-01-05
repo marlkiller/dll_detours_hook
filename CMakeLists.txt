@@ -21,6 +21,7 @@ file(GLOB AppSources ${CMAKE_SOURCE_DIR}/dll_detours_hook/apps/*.cpp)
 file(GLOB AppHeaders ${CMAKE_SOURCE_DIR}/dll_detours_hook/apps/*.h)
 
 file(GLOB UtilHeaders ${CMAKE_SOURCE_DIR}/dll_detours_hook/utils/*.h)
+file(GLOB UtilSources ${CMAKE_SOURCE_DIR}/dll_detours_hook/utils/*.cpp) 
 
 file(GLOB StaticLibs ${CMAKE_SOURCE_DIR}/libs/*.lib)
 
@@ -35,12 +36,14 @@ include_directories(
 add_library(${PROJECT_NAME} SHARED
     ${Main}
     ${AppSources}
+    ${UtilSources} 
 )
 
 ## Build exe
 #add_executable (${PROJECT_NAME} 
 #        ${Main}
 #        ${AppSources}
+#        ${UtilSources}
 #)
 
 # Add headers to the target to make them visible in IDEs
