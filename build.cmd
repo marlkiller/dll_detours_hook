@@ -1,52 +1,47 @@
 @echo off
 setlocal
 
-rem Default build type
 set "build_type=Release"
 
-rem --- Argument Parsing ---
+rem --- Simple Argument Parsing ---
 :arg_loop
-if "%1"=="" goto :end_arg_loop
-if /i "%1"=="-t" (
-    if not "%2"=="" (
-        set "build_type=%2"
-        shift
-    )
-    shift
-    goto :arg_loop
-)
-shift
-goto :arg_loop
+if "%~1"=="" goto :end_arg_loop
+if /i "%~1"=="-t" (set "build_type=%~2" & shift & shift & goto :arg_loop)
+shift & goto :arg_loop
 :end_arg_loop
-rem --- End Argument Parsing ---
 
 echo =================================================
-echo  Starting build with configuration: %build_type%
+echo  Auto-detecting Visual Studio Environment...
 echo =================================================
 
-rem Clean previous build
-if exist "build" (
-    echo "Removing previous build directory..."
-    rmdir /s /q build
+rem 1. Use vswhere to find the path to VsDevCmd.bat
+set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
+for /f "usebackq tokens=*" %%i in (`"%VSWHERE%" -latest -products * -requires Microsoft.VisualStudio.Workload.NativeDesktop -find Common7\Tools\VsDevCmd.bat`) do (
+    set "VSDevCmd=%%i"
 )
 
-rem Configure
-echo "Configuring with CMake..."
-cmake -G "Visual Studio 17 2022" -A x64 -B build .
-if %errorlevel% neq 0 (
-    echo "CMake configuration failed."
-    goto :eof
+if "%VSDevCmd%"=="" (
+    echo [ERROR] Visual Studio C++ workload not found.
+    exit /b 1
 )
 
+rem 2. Initialize VS environment (This sets up PATH, INCLUDE, LIB, etc.)
+echo Loading environment from: %VSDevCmd%
+call "%VSDevCmd%" -arch=x64 >nul
 
-rem Build
-echo "Building with CMake..."
-cmake --build ./build --config %build_type% --target install
-if %errorlevel% neq 0 (
-    echo "CMake build failed."
-    goto :eof
-)
+rem 3. Clean and Build
+if exist "build" rmdir /s /q build
 
-echo "Build completed successfully."
+echo Configuring and Building (%build_type%)...
 
+rem Because the environment is loaded, CMake "just works" with the default generator
+cmake -B build -DCMAKE_BUILD_TYPE=%build_type% .
+if %errorlevel% neq 0 exit /b %errorlevel%
+
+cmake --build build --config %build_type% --target install
+if %errorlevel% neq 0 exit /b %errorlevel%
+
+echo =================================================
+echo  Build successful!
+echo =================================================
 endlocal
