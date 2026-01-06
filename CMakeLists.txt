@@ -12,7 +12,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Od")
 
 message("CMAKE_SOURCE_DIR is : ${CMAKE_SOURCE_DIR}")
-
+if(MSVC)
+    add_compile_options(/utf-8)
+endif()
 # Source files
 file(GLOB Main ${CMAKE_SOURCE_DIR}/dll_detours_hook/*.cpp)
 file(GLOB MainHeader ${CMAKE_SOURCE_DIR}/dll_detours_hook/*.h)
