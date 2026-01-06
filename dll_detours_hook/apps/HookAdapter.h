@@ -22,6 +22,7 @@ public:
 
     virtual void OnFirstLaunch();
 
+    // Checks if this is the first launch and calls OnFirstLaunch if it is.
     void CheckFirstLaunch();
 
 };

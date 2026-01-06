@@ -2,8 +2,30 @@
 #include <cstdio>   // For sprintf_s, snprintf
 #include <string>   // For std::string
 #include <vector>   // For std::vector<char> for intermediate buffer
+#include <codecvt> // For std::wstring_convert
+#include <locale>  // For std::wstring_convert
 
 namespace StringUtils {
+	
+// Helper to convert std::string to std::wstring
+std::wstring s2ws(const std::string& str)
+{
+    using convert_type = std::codecvt_utf8<wchar_t>;
+    std::wstring_convert<convert_type, wchar_t> converter;
+    try {
+        return converter.from_bytes(str);
+    }
+    catch (const std::range_error& e) {
+        // This can happen if the input string is not valid UTF-8.
+        // For this project, process names are typically ASCII, so this is less likely.
+        // You could fall back to a different conversion method if needed.
+        (void)e;
+        size_t convertedChars = 0;
+        std::vector<wchar_t> wstr(str.length() + 1);
+        mbstowcs_s(&convertedChars, wstr.data(), wstr.size(), str.c_str(), _TRUNCATE);
+        return std::wstring(wstr.data());
+    }
+}
 
 std::string FormatHexString(const unsigned char* data, int len) {
     if (!data || len <= 0) {
@@ -96,4 +118,21 @@ bool UTF16StartsWith(const uint16_t* data, int64_t size, std::string_view patter
     return true; // All characters matched
 }
 
+void SetClipboardStr(const wchar_t* text)
+{
+    if (!OpenClipboard(nullptr)) return;
+    EmptyClipboard();
+
+    HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE,
+        (wcslen(text) + 1) * sizeof(wchar_t));
+
+    if (h) {
+        memcpy(GlobalLock(h), text,
+               (wcslen(text) + 1) * sizeof(wchar_t));
+        GlobalUnlock(h);
+        SetClipboardData(CF_UNICODETEXT, h);
+    }
+
+    CloseClipboard();
+}
 } // namespace StringUtils

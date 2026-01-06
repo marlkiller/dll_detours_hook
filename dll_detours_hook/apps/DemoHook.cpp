@@ -3,7 +3,7 @@
 #include <Windows.h>
 // #include "detours.h" // No longer directly needed here for transactions
 #include "HookRegistry.h" // For REGISTER_HOOK macro
-#include "utils/DetourUtils.h" // Include our new DetourUtils
+#include "DetourUtils.h" // Include our new DetourUtils
 
 // Original function pointer for MessageBoxW
 static int (WINAPI * g_origMessageBoxW)(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType) = MessageBoxW;
