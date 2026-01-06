@@ -19,4 +19,9 @@ public:
 
     // Uninstalls the hooks.
     virtual void UninstallHook() {}
+
+    virtual void OnFirstLaunch();
+
+    void CheckFirstLaunch();
+
 };

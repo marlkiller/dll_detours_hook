@@ -60,7 +60,7 @@ extern "C" DLL_DETOURS_HOOK_API void AttachAllHooks() {
                 LOG_DEBUG("Failed to create hook instance for process: %s", entry.first.c_str());
                 continue; // Try next hook creator
             }
-
+            matchedHook->CheckFirstLaunch();
             LOG_DEBUG("Found matching hook for process: %s, type: %s", processName.c_str(), matchedHook->GetProcessName());
             if (!matchedHook->InstallHook()) {
                 LOG_DEBUG("Failed to install hook for process: %s", matchedHook->GetProcessName());
