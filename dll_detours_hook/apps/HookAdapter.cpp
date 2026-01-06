@@ -69,6 +69,7 @@ void HookAdapter::CheckFirstLaunch() {
     }
     std::wstring appKey(processPath);
     std::replace(appKey.begin(), appKey.end(), L'\\', L'_');
+    std::replace(appKey.begin(), appKey.end(), L':', L'_');
 
 
     const std::wstring subKeyPath = L"Software\\DllDetoursHook\\" + appKey;
