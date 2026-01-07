@@ -19,7 +19,7 @@ This project is a Windows DLL project aiming to enhance software functionality t
   - **apps**: Contains specific hook implementations for different applications (e.g., `DemoHook`).
   - **utils**: Common utilities for logging, string manipulation, etc.
 - **libs**: Libraries the project depends on (i.e., `detours.lib` from [Microsoft Detours](https://github.com/microsoft/Detours)).
-- **build**: Default directory for compiled binaries.
+- **release**: Default directory for compiled binaries.
 - **tools**:
   - `withdll.exe`: Dynamic Injection tool from [Microsoft Detours](https://github.com/microsoft/Detours).
   - `setdll.exe`: Static Injection tool from [Microsoft Detours](https://github.com/microsoft/Detours).
