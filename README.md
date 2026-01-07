@@ -53,34 +53,36 @@ Download the latest `dll_detours_hook.zip` from the [Releases](https://github.co
 
 Once you have the DLL and tools, you can inject it.
 
-#### Dynamic Injection
-**Tool**: `withdll.exe`  
-**Description**:  
-Launches the target application with the specified DLL injected at startup.
+### Dynamic Injection (Launch with DLL)
+
+Launches the target application with the DLL injected at process startup.  
+The injection is performed at runtime and **does not modify the executable on disk**.
+
+This approach is commonly used for debugging, hook development, and transient runtime analysis.
 
 ```cmd
 # Run from the tools directory
-withdll.exe /d:..\release\dll_detours_hook.dll C:\Path\To\Target\App\app_demo.exe
+withdll.exe /d:..\release\dll_detours_hook.dll C:\Path\App\app_demo.exe
 ```
 
-#### Static Injection
-**Tool**: `setdll.exe`  
-⚠️ **Warning**  
-Always back up the original executable before performing static injection.
+### Static Injection (IAT Modification)
 
-### Steps
+Performs **static DLL injection by modifying the executable’s Import Address Table (IAT)**.  
+After injection, the DLL will be loaded automatically when the application is started manually.
 
 1. Navigate to the target application's directory:
 ```cmd
-cd C:\Path\To\Target\App
+cd C:\Path\App
 ```
-
 2. Copy `dll_detours_hook.dll` into the directory
-
-3. Inject the DLL using `setdll.exe`:
+3. Inject:
 ```cmd
 "D:\workspace\code\c\dll_detours_hook\tools\setdll.exe" /d:dll_detours_hook.dll app_demo.exe
 ```
+
+⚠️ **WARNING**  
+This method **permanently modifies the executable file on disk**.  
+Always back up the original binary before proceeding.
 
 ### 3. View Logs
 Run `DebugView.exe` from the `tools/DebugView` directory to monitor the debug output from the hooks (e.g., logs created with the `LOG_DEBUG` macro).
