@@ -21,8 +21,8 @@ This project is a Windows DLL project aiming to enhance software functionality t
 - **libs**: Libraries the project depends on (i.e., `detours.lib` from [Microsoft Detours](https://github.com/microsoft/Detours)).
 - **build**: Default directory for compiled binaries.
 - **tools**:
-  - `withdll.exe`: Static Injection tool from [Microsoft Detours](https://github.com/microsoft/Detours).
-  - `setdll.exe`: Dynamic Injection tool from [Microsoft Detours](https://github.com/microsoft/Detours).
+  - `withdll.exe`: Dynamic Injection tool from [Microsoft Detours](https://github.com/microsoft/Detours).
+  - `setdll.exe`: Static Injection tool from [Microsoft Detours](https://github.com/microsoft/Detours).
   - `DebugView`: A utility to view debug output messages from the hooks.
 
 ## Features
@@ -53,7 +53,7 @@ Download the latest `dll_detours_hook.zip` from the [Releases](https://github.co
 
 Once you have the DLL and tools, you can inject it.
 
-#### Launch-time Injection (Static)
+#### Dynamic Injection
 This method uses `withdll.exe` to start an application with the DLL already injected. This is often the simplest and most reliable method.
 
 ```shell
@@ -62,7 +62,7 @@ This method uses `withdll.exe` to start an application with the DLL already inje
 .\withdll.exe /d:..\release\dll_detours_hook.dll C:\Windows\System32\notepad.exe
 ```
 
-#### Runtime Injection (Dynamic)
+#### Static Injection
 This method uses `setdll.exe` to inject the DLL into an application that is already running. For best results, follow these steps:
 
 1.  Navigate to the target application's directory (e.g., where `app_demo.exe` is located).
