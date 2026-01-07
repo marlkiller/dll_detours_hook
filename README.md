@@ -39,7 +39,7 @@ This section explains how to get the necessary files and inject the DLL into a t
 You have two options to get the hook DLL and injection tools.
 
 #### Option A: Build from Source
-Run the build script from the root directory. This will compile the project and place the output (`dll_detours_hook.dll`) in the `build/Release` folder. The injection tools are in the `tools` directory.
+Run the build script from the root directory. This will compile the project and place the output (`dll_detours_hook.dll`) in the `release` folder. The injection tools are in the `tools` directory.
 ```shell
 build.cmd
 ```
