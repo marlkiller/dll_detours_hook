@@ -61,7 +61,6 @@ The injection is performed at runtime and **does not modify the executable on di
 This approach is commonly used for debugging, hook development, and transient runtime analysis.
 
 ```cmd
-# Run from the tools directory
 withdll.exe /d:..\release\dll_detours_hook.dll C:\Path\App\app_demo.exe
 ```
 
