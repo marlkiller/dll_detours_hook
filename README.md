@@ -54,38 +54,33 @@ Download the latest `dll_detours_hook.zip` from the [Releases](https://github.co
 Once you have the DLL and tools, you can inject it.
 
 #### Dynamic Injection
-This method uses `withdll.exe` to **launch a target application with the DLL injected at startup**.  
-The injection happens at runtime and **does not modify the target executable on disk**.
-
-This is often the simplest and most reliable way to test DLL hooks or runtime behavior.
+**Tool**: `withdll.exe`  
+**Description**:  
+Launches the target application with the specified DLL injected at startup.
 
 ```cmd
-# Example: Execute from the 'tools' directory.
-# Adjust the path to your DLL (from build or release) and the target application.
-.\withdll.exe /d:..\release\dll_detours_hook.dll C:\Windows\System32\notepad.exe
+# Run from the tools directory
+withdll.exe /d:..\release\dll_detours_hook.dll C:\Path\To\Target\App\app_demo.exe
 ```
 
 #### Static Injection
-This method uses `setdll.exe` to perform **static DLL injection** by **modifying the target executable file**.  
-It works by updating the **Import Address Table (IAT)** so that the DLL is loaded automatically when the application starts.
-
-⚠️ **Warning:**  
-This method **permanently changes the executable on disk**.  
-Always keep a backup of the original file before using static injection.
+**Tool**: `setdll.exe`  
+⚠️ **Warning**  
+Always back up the original executable before performing static injection.
 
 ### Steps
 
-1. Navigate to the target application's directory (for example, where `app_demo.exe` is located).
-   ```cmd
-   cd C:\Path\To\Target\App
-   ```
+1. Navigate to the target application's directory:
+```cmd
+cd C:\Path\To\Target\App
+```
 
-2. Copy `dll_detours_hook.dll` into the same directory.
+2. Copy `dll_detours_hook.dll` into the directory
 
-3. Run `setdll.exe` (using its full path) to modify the executable and add the DLL to its import table.
-   ```cmd
-   "D:\workspace\code\c\dll_detours_hook\tools\setdll.exe" /d:dll_detours_hook.dll "app_demo.exe"
-   ```
+3. Inject the DLL using `setdll.exe`:
+```cmd
+"D:\workspace\code\c\dll_detours_hook\tools\setdll.exe" /d:dll_detours_hook.dll app_demo.exe
+```
 
 ### 3. View Logs
 Run `DebugView.exe` from the `tools/DebugView` directory to monitor the debug output from the hooks (e.g., logs created with the `LOG_DEBUG` macro).
