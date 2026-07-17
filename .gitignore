@@ -2,3 +2,8 @@ build/
 .vs/
 release/
 .idea
+
+# .NET build outputs
+**/bin/
+**/obj/
+**/dotnet_harmony_hook/*.nupkg

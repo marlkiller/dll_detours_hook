@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net48;net8.0-windows</TargetFrameworks>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>DotnetHarmonyHook</RootNamespace>
+    <AssemblyName>DotnetHarmonyHook</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Lib.Harmony" Version="2.3.5" />
+  </ItemGroup>
+
+  <Target Name="Embed0Harmony" BeforeTargets="BeforeBuild" Condition="'$(TargetFramework)' == 'net48'">
+    <PropertyGroup>
+      <HarmonyDllPath>$(NuGetPackageRoot)lib.harmony\2.3.5\lib\net48\0Harmony.dll</HarmonyDllPath>
+    </PropertyGroup>
+    <ItemGroup>
+      <EmbeddedResource Include="$(HarmonyDllPath)" Visible="false" />
+    </ItemGroup>
+  </Target>
+  <Target Name="CleanExtraHarmony" AfterTargets="Build" Condition="'$(TargetFramework)' == 'net48'">
+    <Delete Files="$(TargetDir)0Harmony.dll" />
+    <Delete Files="$(TargetDir)0Harmony.pdb" />
+  </Target>
+
+</Project>

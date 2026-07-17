@@ -1,164 +1,118 @@
-# DLL Detours Hook
-
-## About
+# DLL Detours Hook & .NET Harmony Hook
 
 [![Telegram](https://img.shields.io/badge/Join%20our%20Telegram-blue?logo=telegram)](https://t.me/dylib_dobby_hook_chat)
 
-This project is a Windows DLL project aiming to enhance software functionality through API hooking, using the **Microsoft Detours** library.
+A Windows DLL injection project for enhancing software functionality through API hooking, supporting both **native (C++)** and **managed (.NET)** applications.
 
-**Development Environment:**
+## Development Environment
 
 - Windows
-- Visual Studio | CLion
-- CMake
-- Debugging Tools: x64dbg, IDA Pro
+- Visual Studio / CLion / JetBrains Rider
+- CMake / .NET SDK
+- Debugging Tools: x64dbg, IDA Pro, DebugView
 
-**Directory Structure:**
+## Project Structure
 
-- **dll_detours_hook**: Main source code for the hook DLL.
-  - **apps**: Contains specific hook implementations for different applications (e.g., `DemoHook`).
-  - **utils**: Common utilities for logging, string manipulation, etc.
-- **libs**: Libraries the project depends on (i.e., `detours.lib` from [Microsoft Detours](https://github.com/microsoft/Detours)).
-- **release**: Default directory for compiled binaries.
-- **tools**:
-  - `withdll.exe`: Dynamic Injection tool from [Microsoft Detours](https://github.com/microsoft/Detours).
-  - `setdll.exe`: Static Injection tool from [Microsoft Detours](https://github.com/microsoft/Detours).
-  - `DebugView`: A utility to view debug output messages from the hooks.
+```
+├── dll_detours_hook/          Native C++ hook DLL (Microsoft Detours)
+│   ├── apps/                  Hook implementations (Snipaste, Demo, etc.)
+│   └── utils/                 Common utilities (Logger, etc.)
+├── dotnet_harmony_hook/       Managed .NET hook DLL (Lib.Harmony)
+│   └── src/
+│       ├── hooks/             .NET hook implementations (Listary, Demo, etc.)
+│       ├── HarmonyUtils.cs    Harmony patching wrapper
+│       └── HookAppDomainManager.cs  CLR injection entry
+├── script/
+│   ├── inject.bat             Native DLL injection (setdll.exe / IAT)
+│   └── inject_dotnet.bat      .NET DLL injection (AppDomainManager)
+├── libs/                      detours.lib
+├── tools/                     setdll.exe, withdll.exe, DebugView, Xenos
+└── release/                   Build output
+```
 
-## Features
+See [supported-apps.md](./supported-apps.md) for the list of supported apps.
 
-Check the full list of supported apps [here](./supported-apps.md).
+## Build
 
+### Native (C++ Detours)
 
-## Usage
-
-This section explains how to get the necessary files and inject the DLL into a target application.
-
-### 1. Get the Required Files
-
-You have two options to get the hook DLL and injection tools.
-
-#### Option A: Build from Source
-Run the build script from the root directory. This will compile the project and place the output (`dll_detours_hook.dll`) in the `release` folder. The injection tools are in the `tools` directory.
-```shell
+```cmd
 build.cmd
 ```
 
-#### Option B: Use Pre-built Release
-Download the latest `dll_detours_hook.zip` from the [Releases](https://github.com/marlkiller/dll_detours_hook/releases) page and unzip it. It contains:
-- `release/dll_detours_hook.dll`: The hook library.
-- `tools/`: The injection tools directory.
+Output: `release/dll_detours_hook.dll`
 
-### 2. Inject the DLL
-
-Once you have the DLL and tools, you can inject it.
-
-### Dynamic Injection (Launch with DLL)
-
-Launches the target application with the DLL injected at process startup.  
-The injection is performed at runtime and **does not modify the executable on disk**.
-
-This approach is commonly used for debugging, hook development, and transient runtime analysis.
+### Managed (.NET Harmony)
 
 ```cmd
-withdll.exe /d:..\release\dll_detours_hook.dll C:\Path\App\app_demo.exe
+cd dotnet_harmony_hook
+build.cmd
 ```
 
-### Static Injection (IAT Modification)
+Output: `release/dotnet_harmony_hook/DotnetHarmonyHook.dll` (targets .NET Framework 4.8 + .NET 8.0)
 
-Performs **static DLL injection by modifying the executable’s Import Address Table (IAT)**.  
-After injection, the DLL will be loaded automatically when the application is started manually.
+## Injection
 
-#### Manual Method:
-1. Navigate to the target application's directory:
+### Native (C++ Detours)
+
+#### Dynamic Injection
+Launches target with DLL injected at startup — no disk modification.
+
 ```cmd
-cd C:\Path\App
-```
-2. Copy `dll_detours_hook.dll` into the directory
-3. Inject:
-```cmd
-"D:\workspace\code\c\dll_detours_hook\tools\setdll.exe" /d:dll_detours_hook.dll app_demo.exe
+withdll.exe /d:release\dll_detours_hook.dll C:\Path\To\app_demo.exe
 ```
 
-#### Automated Method (Recommended):
-Use the provided injection script for a user-friendly process:
+#### Static Injection (IAT Modification) — Recommended
+Permanently adds the DLL to the target's import table.
 
 ```cmd
 script\inject.bat "C:\Path\To\app_demo.exe"
 ```
 
-Or specify a custom DLL path:
+Or with a custom DLL path:
 
 ```cmd
 script\inject.bat "C:\Path\To\app_demo.exe" "D:\path\to\dll_detours_hook.dll"
 ```
 
-The script will:
-1. Copy the DLL to the target application's directory
-2. Execute `setdll.exe` to perform the injection
+⚠️ **This permanently modifies the executable. Always back up the original.**
 
-⚠️ **WARNING**  
-This method **permanently modifies the executable file on disk**.  
-Always back up the original binary before proceeding.
+### Managed (.NET Harmony)
 
-### 3. View Logs
-Run `DebugView.exe` from the `tools/DebugView` directory to monitor the debug output from the hooks (e.g., logs created with the `LOG_DEBUG` macro).
+Uses the AppDomainManager technique — no disk modification required.
+
+```cmd
+script\inject_dotnet.bat "C:\Path\To\TargetApp.exe"
+```
+
+The script copies `DotnetHarmonyHook.dll` into the target directory and launches the process with `APPDOMAIN_MANAGER` environment variables set.
+
+## View Logs
+
+Run `tools/DebugView/DebugView.exe` to monitor debug output from the hooks.
 
 ## Develop
 
-The framework is designed to be easily extendable by creating new hook implementations.
+### Adding a Native Hook (C++ / Detours)
 
-### 1. Define a New Hook Class
+1. Create `MyHook.h` and `MyHook.cpp` in `dll_detours_hook/apps/`
+2. Inherit from `HookAdapter`, implement `InstallHook()` and `GetProcessName()`
+3. Register with `REGISTER_HOOK(MyHook, "target.exe")`
 
-Create new `.h` and `.cpp` files in the `dll_detours_hook/apps/` directory for your hook. The class should implement the required hooking logic.
+Example: see [DemoHook](dll_detours_hook/apps/DemoHook.cpp)
 
-**Example: A simple `DemoHook`**
+### Adding a Managed Hook (C# / Harmony)
 
-```cpp
-// --- In DemoHook.h ---
-#pragma once
+1. Create `MyHook.cs` in `dotnet_harmony_hook/src/hooks/`
+2. Use `HarmonyUtils.PatchMethod()` to apply Harmony patches
+3. Register via `HookRegistry.Register<MyHook>("TargetApp.exe")`
 
-class DemoHook {
-public:
-    void InstallHook();
-    const char* GetProcessName() override; // Added GetProcessName
-};
-
-
-// --- In DemoHook.cpp ---
-#include "DemoHook.h"
-#include "detours.h"
-#include "utils/Logger.h"
-
-// Define a pointer for the original function
-static int (WINAPI* OriginalMessageBoxW)(HWND, LPCWSTR, LPCWSTR, UINT) = MessageBoxW;
-
-// Your custom detoured function
-int WINAPI DetouredMessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType) {
-    LOG_DEBUG("Hooked MessageBoxW!");
-    return OriginalMessageBoxW(hWnd, L"Hooked!", lpCaption, uType);
-}
-
-void DemoHook::InstallHook() {
-    DetourTransactionBegin();
-    DetourUpdateThread(GetCurrentThread());
-    DetourAttach(&(PVOID&)OriginalMessageBoxW, DetouredMessageBoxW);
-    DetourTransactionCommit();
-}
-
-const char* DemoHook::GetProcessName() {
-    return "c_bin_dev.exe"; // Example process name
-}
-
-REGISTER_HOOK(DemoHook, "c_bin_dev.exe");
-
-```
+Example: see [DemoNetHook](dotnet_harmony_hook/src/hooks/DemoNetHook.cs)
 
 ## Powered by
 
-[![JetBrains logo.](https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg)](https://jb.gg/OpenSource) 
+[![JetBrains logo.](https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg)](https://jb.gg/OpenSource)
 
-## WARNING
+## Warning
 
-For research and learning purposes only. Please do not use for illegal purposes.   
-Note: If reprinted, please indicate the source (link to this post) and author information.
+For research and learning purposes only. Do not use for illegal purposes.
