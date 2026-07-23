@@ -33,7 +33,6 @@ public static class HookLoader
 
             _pendingHookCreator = creator;
             AppDomain.CurrentDomain.AssemblyLoad += (_, _) => InstallPendingHook();
-            InstallPendingHook();
             break;
         }
     }
